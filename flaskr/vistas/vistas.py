@@ -1,9 +1,10 @@
 from flask_restful import Resource
-from flask import request, jsonify, send_from_directory
+from flask import request, current_app, jsonify, send_from_directory
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from ..modelos import db, User, UserSchema, ConversionTask, ConversionTaskSchema, TaskStatus
 from werkzeug.utils import secure_filename
 from celery import Celery
+import os
 
 celery_app = Celery(__name__, broker='redis://localhost:6379/0')
 
@@ -64,19 +65,23 @@ class TasksView(Resource):
 
     @jwt_required()
     def post(self):
+        audio_file = request.files['file']
+        filename = secure_filename(request.form['filename'])
+        new_file_format = request.form['new_format']
+        new_file_name = f'{filename.split(".")[0]}.{new_file_format}'
         new_task = ConversionTask(
-                                user = request.json['user'],
-                                original_file_name = request.json['original_file_name'],
-                                mew_file_name = request.json['mew_file_name'],
-                                new_file_format = request.json['new_file_format']
+                                user = get_jwt_identity(),
+                                original_file_name = filename,
+                                new_file_name = new_file_name,
+                                new_file_format = new_file_format
         )
         db.session.add(new_task)
         db.session.commit()
+        audio_file.save(os.path.join(current_app.config['FILES_FOLDER'], filename))
         args = (
             new_task.id, 
             new_task.original_file_name, 
-            new_task.new_file_format, 
-            create_access_token(identity=new_task.id)
+            new_task.new_file_format
         )
         convert_file.apply_async(args=args, queue="batch")
         return conversion_task_schema.dump(new_task)
@@ -93,7 +98,7 @@ class TaskView(Resource):
         task.status = request.json.get('status', task.status)
         task.user = request.json.get('user', task.user)
         task.original_file_name = request.json.get('original_file_name', task.original_file_name)
-        task.mew_file_name = request.json.get('mew_file_name', task.mew_file_name)
+        task.new_file_name = request.json.get('new_file_name', task.mew_file_name)
         task.new_file_format = request.json.get('new_file_format', task.new_file_format)
         db.session.commit()
         return conversion_task_schema.dump(task)
@@ -104,3 +109,11 @@ class TaskView(Resource):
         db.session.delete(task)
         db.session.commit()
         return 'Se ha eliminado la tarea', 204
+
+class WorkerView(Resource):
+
+    def post(self, id_task):
+        task = ConversionTask.query.get_or_404(id_task)
+        task.status = "PROCESSED"
+        db.session.commit()
+        return conversion_task_schema.dump(task)
