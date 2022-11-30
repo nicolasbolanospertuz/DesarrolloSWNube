@@ -25,6 +25,8 @@ class TaskFormats(Enum):
     MP3 = "mp3"
     OGG = "ogg"
     WMA = "wma"
+    WAV = "wav"
+    ACC = "acc"
 
 
 class ConversionTask(db.Model):

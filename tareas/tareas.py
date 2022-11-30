@@ -8,17 +8,16 @@ api_url = 'http://127.0.0.1:5000/'
 
 @celery_app.task(name="convert_file")
 def convert_file(id: str, original_file_name: str, new_file_format: str):
-    with open('logs.txt', 'a+') as file:
-        file.write(f'Tarea del file {id}, nombre file: {original_file_name}\n')
     original_file_info = original_file_name.split(".")
-    path = os.path.realpath(__file__)
-    dir = os.path.dirname(path)
-    dir = dir.replace('tareas', 'files')
-    os.chdir(dir)
-    with open(original_file_name, mode='rb') as f:
-        original_audio = AudioSegment.from_file(f, format=original_file_info[1])
-        original_audio.export(f'files/{original_file_info[0]}.{new_file_format}', format=new_file_format)
+    directory = os.path.dirname(__file__)
+    rel_path = f'files\{original_file_name}'
+    rel_new_path = f'files\{original_file_info[0]}.{new_file_format}'
+    abs_path_original = os.path.join(directory, rel_path)
+    abs_path_new = os.path.join(directory, rel_new_path)
+    original_audio = AudioSegment.from_file(abs_path_original, format=original_file_info[1])
+    original_audio.export(abs_path_new, format=new_file_format)
     url = f'{api_url}api/background/tasks/{id}'
     r = requests.post(url=url)
-    print(r.content)
-    f.close()
+    with open('logs.txt', 'a+') as file:
+        file.write(f'{r.content}\n')
+    file.close()

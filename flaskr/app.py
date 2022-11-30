@@ -10,8 +10,8 @@ app = create_app('default')
 app_context = app.app_context()
 app_context.push() 
 
-if not os.path.exists('../files'):
-    os.makedirs('../files')
+if not os.path.exists(app.config["FILES_FOLDER"]):
+    os.makedirs(app.config["FILES_FOLDER"])
 
 db.init_app(app)
 db.create_all()

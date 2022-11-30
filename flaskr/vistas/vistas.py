@@ -77,7 +77,8 @@ class TasksView(Resource):
         )
         db.session.add(new_task)
         db.session.commit()
-        audio_file.save(os.path.join(current_app.config['FILES_FOLDER'], filename))
+        file_path = os.path.join(current_app.config['FILES_FOLDER'], filename)
+        audio_file.save(file_path)
         args = (
             new_task.id, 
             new_task.original_file_name, 
