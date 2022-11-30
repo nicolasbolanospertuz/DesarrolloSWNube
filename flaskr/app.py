@@ -3,7 +3,7 @@ from .modelos import db
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from .vistas import SignInView, SignUpView, TasksView, TaskView, WorkerView
+from .vistas import SignInView, SignUpView, TasksView, TaskView, WorkerView, FileView
 import os
 
 app = create_app('default')
@@ -26,5 +26,6 @@ api.add_resource(SignInView, "/api/auth/login")
 api.add_resource(TasksView, '/api/tasks')
 api.add_resource(TaskView, '/api/tasks/<int:id_task>')
 api.add_resource(WorkerView, '/api/background/tasks/<int:id_task>')
+api.add_resource(FileView, '/api/files/<string:filename>')
 
 jwt = JWTManager(app)

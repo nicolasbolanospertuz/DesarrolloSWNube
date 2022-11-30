@@ -111,6 +111,13 @@ class TaskView(Resource):
         db.session.commit()
         return 'Se ha eliminado la tarea', 204
 
+class FileView(Resource):
+
+    @jwt_required()
+    def get(self, filename):
+        file_path = os.path.join(current_app.config['FILES_FOLDER'])
+        return send_from_directory(file_path, filename, as_attachment=True)
+
 class WorkerView(Resource):
 
     def post(self, id_task):
