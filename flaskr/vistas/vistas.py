@@ -3,6 +3,7 @@ from flask import request, current_app, jsonify, send_from_directory
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from ..modelos import db, User, UserSchema, ConversionTask, ConversionTaskSchema, TaskStatus
 from werkzeug.utils import secure_filename
+from google.cloud import storage
 from celery import Celery
 import os
 
@@ -10,6 +11,10 @@ celery_app = Celery(__name__, broker='redis://localhost:6379/0')
 
 user_schema = UserSchema()
 conversion_task_schema = ConversionTaskSchema()
+
+bucket = 'nicolas-bolanos-flask-bucket'
+storage_client = storage.Client()
+bucket = storage_client.bucket(bucket)
 
 @celery_app.task(name='convert_file')
 def convert_file(*args):
@@ -77,6 +82,8 @@ class TasksView(Resource):
         )
         db.session.add(new_task)
         db.session.commit()
+        blob = bucket.blob(f'files/{filename}')
+        blob.upload_from_file(audio_file)
         file_path = os.path.join(current_app.config['FILES_FOLDER'], filename)
         audio_file.save(file_path)
         args = (
@@ -116,6 +123,8 @@ class FileView(Resource):
     @jwt_required()
     def get(self, filename):
         file_path = os.path.join(current_app.config['FILES_FOLDER'])
+        blob = bucket.blob(f'files/{filename}')
+        blob.download_to_filename(os.path.join(current_app.config['FILES_FOLDER'], filename))
         return send_from_directory(file_path, filename, as_attachment=True)
 
 class WorkerView(Resource):
