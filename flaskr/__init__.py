@@ -8,4 +8,5 @@ def create_app(config_name):
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["FILES_FOLDER"] = '../tareas/files'
+    app.config["REDIS_INSTANCE_IP"] = '34.138.239.130'
     return app

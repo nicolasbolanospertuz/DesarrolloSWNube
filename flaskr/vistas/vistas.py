@@ -7,7 +7,7 @@ from google.cloud import storage
 from celery import Celery
 import os
 
-celery_app = Celery(__name__, broker=f'redis://{os.environ.get("REDIS_INSTANCE_IP")}:6379/0')
+celery_app = Celery(__name__, broker=f'redis://{current_app.config["REDIS_INSTANCE_IP"]}:6379/0')
 
 user_schema = UserSchema()
 conversion_task_schema = ConversionTaskSchema()
