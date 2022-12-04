@@ -4,7 +4,7 @@ from google.cloud import storage
 import requests
 import os
 
-celery_app = Celery(__name__, broker=f'redis://{os.environ.get("REDIS_INSTANCE_IP")}/0')
+celery_app = Celery(__name__, broker='redis://127.0.0.1:6379/0')
 api_url = os.environ.get("API_INSTANCE_IP")
 
 @celery_app.task(name="convert_file")
